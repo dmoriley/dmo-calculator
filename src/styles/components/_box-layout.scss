@@ -1,0 +1,42 @@
+.box-layout {
+    // background: url('/imgs/bg.jpg');
+    // background-size: cover; /* cover the entire box layout (also adjusts picture so see entire picture and not zoomed in) */
+    height: 100vh; /* vh tells the browser to use 100% of the viewport height*/
+    width: 100vw; /* vh tells the browser to use 100% of the viewport width*/
+    background: linear-gradient(rgb(102, 215, 250), $main-colour);
+    //center content vertically and horizontally within the item class is on
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transition-duration: $fade-time;
+}
+
+.box-layout__box {
+    background: fade-out( white, .15); /* Scss function that makes colour more transparent. Takes colour and number between 0-1*/
+    border-radius: 20px;
+    padding: $s-size $s-size;
+    text-align:center;
+    width: auto;
+    // width: 40rem;
+    margin-bottom: 2.0rem;
+}
+
+@media only screen and (min-width: $desktop-breakpoint) {
+  // desktop css in here
+  .box-layout__box {
+    // width: auto;
+  }
+}
+
+.box_layout__title {
+    margin: 0 0 $m-size 0;
+    line-height: 1; /*makes sure there is space between your lines when you have text across multiple lines. Because title only uses one line 
+    setting it to 1 more evenly distributes the space above and below the line.*/
+}
+
+.box_layout__buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

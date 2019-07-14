@@ -1,0 +1,76 @@
+$rowHeight: 60px;
+$columnWidth: 70px;
+
+footer {
+  text-align: center;
+  a {
+    color: $rose-red
+  }
+}
+
+.calculator-container {
+  display: grid;
+  grid-gap: 1px;
+  grid-template-rows: repeat(6, minmax($rowHeight, auto));
+  grid-template-columns: repeat(4, $columnWidth);
+  grid-template-areas:
+    "display display display display"
+    "clear   clear   divide  multiply"
+    "seven   eight   nine    minus"
+    "four    five    six     plus"
+    "one     two     three   equals"
+    "zero    zero    period  equals"
+  ;
+}
+
+// set properties of all the buttons
+.calculator-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: $off-white;
+  background-color: $dark-grey;
+  &:hover {
+    color: black;
+    border: 1px $off-white solid;
+  }
+}
+
+.operator-button {
+  background-color: $grey2;
+}
+
+.display-container {
+  display: flex;
+  flex-direction: column;
+  grid-area: display;
+  color: $off-white;
+  padding: $xxs-size;
+  background-color: black;
+  & > div {
+    text-align: right;
+    word-break: break-all;
+  }
+  .history {
+    flex-grow: 1;
+    color: orange;
+  }
+  .display {
+    font-size: $xm-size;
+    line-height: 1;
+  }
+}
+
+#clear {
+  grid-area: clear;
+  background-color: $rose-red
+}
+
+#zero {
+  grid-area: zero;
+}
+
+#equals {
+  grid-area: equals;
+  background-color: $dark-blue;
+}

@@ -1,0 +1,11 @@
+.show-for-mobile { //with >= breakpoint
+    @media (min-width: $desktop-breakpoint) {
+        display:none;
+    }
+}
+
+.show-for-desktop { // width <= breakpoint
+    @media (max-width: $desktop-breakpoint - .01rem) { //need to subract small number so they dont both show up at the same time.
+        display:none;
+    }
+}
