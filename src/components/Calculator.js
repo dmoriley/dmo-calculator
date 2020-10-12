@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
@@ -9,34 +9,7 @@ const Calculator = () => {
   const operators = ['/','*','+','-'];
   const errors = {LIMIT: 'DIGIT LIMIT REACHED'};
 
-  // subscribe and unsubscribe from the events 
-  useEffect(() => {
-    EventEmitter.subscribe(events.OPERAND_CLICKED, operandClicked);
-    EventEmitter.subscribe(events.OPERATOR_CLICKED, operatorClicked);
-    EventEmitter.subscribe(events.CALCULATE, calculate);
-    EventEmitter.subscribe(events.CLEAR, clear);
-    return () => {
-      EventEmitter.unsubscribe(events.OPERAND_CLICKED);
-      EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
-      EventEmitter.unsubscribe(events.CALCULATE);
-      EventEmitter.unsubscribe(events.CLEAR);
-    }
-  },[])
-
-  //////////////////////////////
-  //      Other functions     //
-  //////////////////////////////
-
-  /**
-   * Determine if a value is a valid operand
-   * @param {string} Value to be tested
-   * @return {boolean}True or value whether it was valid or not
-   */
-  function isValidOperand(value) {
-    const validOperand = /^\d*(\.)?(\d*)?$/;
-    return value.match(validOperand);
-  }
-  //////////////////////////////
+    //////////////////////////////
   // Event handling functions //
   //////////////////////////////
   
@@ -44,7 +17,7 @@ const Calculator = () => {
    * When a number or period is clicked
    * @param value The number clicked
    */
-  function operandClicked(value) {
+  const operandClicked = useCallback((value) => { //memoize function with usecallback to prevent new function creation on each render
     setState(({history, current}) => {
       // check if expression contains =, so previously evaluated
       if(history.indexOf('=') >= 0) {
@@ -86,13 +59,13 @@ const Calculator = () => {
         return {history, current};
       }
     });
-  }
+  }, [errors.LIMIT, operators]);
 
   /**
    * When a operator like + - X / is clicked
    * @param value The operator clicked
    */
-  const operatorClicked = (value) => {
+  const operatorClicked = useCallback((value) => {
     setState(({history, current, error}) => {
       if(error) return {history,current,error};
       // pressed operator after evaluating, continue with result
@@ -100,16 +73,16 @@ const Calculator = () => {
         return {history: current + value, current: value};
       }
 
-      const newHistory = '';
+      let newHistory = '';
       if(operators.indexOf(current) < 0 || 
-        (value === '-' && history.match(/\d[-+/\*]$/)) ) {
+        (value === '-' && history.match(/\d[-+/*]$/)) ) {
         // match for when they put a negative sign 
         // clicked an operator from a numbers
         newHistory =  history + value;
       } else {
         // clicked an operator from an operator
         // replace last character in the history with the new operator
-        if(history.match(/\d[-+/\*]-$/)) {
+        if(history.match(/\d[-+/*]-$/)) {
           // has negative sign so replace operator and negative sign with new operator
           newHistory = history.slice(0, history.length-2) + value;  
         } else {
@@ -119,6 +92,34 @@ const Calculator = () => {
       }
       return {history: newHistory, current: value};
     });
+  }, [operators]);
+
+  // subscribe and unsubscribe from the events 
+  useEffect(() => {
+    EventEmitter.subscribe(events.OPERAND_CLICKED, operandClicked);
+    EventEmitter.subscribe(events.OPERATOR_CLICKED, operatorClicked);
+    EventEmitter.subscribe(events.CALCULATE, calculate);
+    EventEmitter.subscribe(events.CLEAR, clear);
+    return () => {
+      EventEmitter.unsubscribe(events.OPERAND_CLICKED);
+      EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
+      EventEmitter.unsubscribe(events.CALCULATE);
+      EventEmitter.unsubscribe(events.CLEAR);
+    }
+  }, [operandClicked, operatorClicked])
+
+  //////////////////////////////
+  //      Other functions     //
+  //////////////////////////////
+
+  /**
+   * Determine if a value is a valid operand
+   * @param {string} Value to be tested
+   * @return {boolean}True or value whether it was valid or not
+   */
+  function isValidOperand(value) {
+    const validOperand = /^\d*(\.)?(\d*)?$/;
+    return value.match(validOperand);
   }
 
   /** Initial the calculation */
