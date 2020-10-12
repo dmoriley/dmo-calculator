@@ -9,8 +9,8 @@ const Calculator = () => {
   const operators = ['/','*','+','-'];
   const errors = {
     LIMIT: 'DIGIT LIMIT REACHED',
-    MATH_ERROR: 'MATH ERROR',
-    ERROR: 'ERROR'
+    MATH: 'MATH ERROR',
+    SYNTAX: 'SYNTAX ERROR'
   };
 
     //////////////////////////////
@@ -80,9 +80,16 @@ const Calculator = () => {
         return { history: current + value, current: value, error: ''};
       }
 
+      // check if history is blank and pad a zero
+      if (history.length === 0) {
+        history += '0';
+      }
+
       let newHistory = '';
-      if(operators.indexOf(current) < 0 || 
-        (value === '-' && history.match(/\d[-+/*]$/)) ) {
+      if (
+        operators.indexOf(current) < 0 || 
+        (value === '-' && history.match(/\d[-+/*]$/)) 
+      ) {
         // match for when they put a negative sign 
         // clicked an operator from a numbers
         newHistory =  history + value;
