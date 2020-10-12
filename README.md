@@ -1,7 +1,7 @@
 # dmo-calculator
 
 ## To run build script
- - Create src folder at root and add index.js + main content off web app
+ - Create src folder at root and add index.js + main content of web app
  - Update import paths inside of index.js to reflect new location
  - if using sass for styles run *npm install node-sass* to add node sass to the project
  - Create a public folder at root of project and put index.html inside
