@@ -15,7 +15,7 @@ footer {
   grid-template-columns: repeat(4, $columnWidth);
   grid-template-areas:
     "display display display display"
-    "clear   clear   divide  multiply"
+    "clear   correction  divide  multiply"
     "seven   eight   nine    minus"
     "four    five    six     plus"
     "one     two     three   equals"

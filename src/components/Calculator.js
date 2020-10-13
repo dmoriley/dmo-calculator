@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import BackspaceIcon from '@material-ui/icons/Backspace';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
@@ -108,35 +109,37 @@ const Calculator = () => {
     });
   }, [operators]);
 
-  // subscribe and unsubscribe from the events 
-  useEffect(() => {
-    EventEmitter.subscribe(events.OPERAND_CLICKED, operandClicked);
-    EventEmitter.subscribe(events.OPERATOR_CLICKED, operatorClicked);
-    EventEmitter.subscribe(events.CALCULATE, calculate);
-    EventEmitter.subscribe(events.CLEAR, clear);
-    return () => {
-      EventEmitter.unsubscribe(events.OPERAND_CLICKED);
-      EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
-      EventEmitter.unsubscribe(events.CALCULATE);
-      EventEmitter.unsubscribe(events.CLEAR);
+  /** Remove the last character entered */
+  const correction = useCallback(() => {
+    if (state.history.length === 0 || state.history.indexOf('=') > -1) {
+      return;    
     }
-  }, [operandClicked, operatorClicked])
 
-  //////////////////////////////
-  //      Other functions     //
-  //////////////////////////////
+    setState(s => {
+      const newHistory = s.history.slice(0, s.history.length - 1);
+      let newCurrent = [];
+  
+      if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
+        // if char removed was a number and new last charater is operator
+        newCurrent[0] = newHistory.charAt(newHistory.length - 1);
+      } else if (newHistory.length === 0) {
+        newCurrent = '0';
+      } else {
+        // get all numbers in history and assign last one to newCurrent
+        const numbers = newHistory.match(/\d*/g).filter(i => i);
+        newCurrent = numbers[numbers.length - 1];
+      }
 
-  /**
-   * Determine if a value is a valid operand
-   * @param {string} Value to be tested
-   * @return {boolean} True or false whether it was valid or not
-   */
-  function isValidOperand(value) {
-    return value.match(/^\d*(\.)?(\d*)?$/);
-  }
+      return { 
+        ...s,
+        current: newCurrent,
+        history: newHistory,
+      };
+    });
+  }, [state.history]);
 
   /** Initial the calculation */
-  const calculate = () => {
+  const calculate = useCallback(() => {
     setState(s => {
       if (s.error || s.history.length === 0) {
         return s;
@@ -152,13 +155,26 @@ const Calculator = () => {
         s.history += s.history.slice(0, s.history.length - 1);
       }
 
-      const result = evaluate(s.history);
-      return {history: s.history + '=' + result, current: result, error: ''};
+      let newHistory = '';
+      let result = '';
+      try {
+        result = evaluate(s.history);
+        newHistory = s.history + '=' + result;        
+      } catch (error) {
+
+        setTimeout(() => {
+          // after 1.5s clear error
+          setState({history: s.history, current: s.current, error: ''});
+        }, 1500);
+        return {history: s.history, current: s.current, error: errors.SYNTAX}
+      }
+
+      return {history: newHistory, current: result, error: ''};
     });
-  }
+  }, [errors.SYNTAX]);
 
   /** Clear the current calculation from the calculator */
-  const clear = () => {
+  const clear = useCallback(() => {
     setState(prev => {
       if(prev.error) {
         return prev;
@@ -166,6 +182,35 @@ const Calculator = () => {
         return {history: '', current: '0', error: ''};
       }
     });
+  }, []);
+
+  // subscribe and unsubscribe from the events 
+  useEffect(() => {
+    EventEmitter.subscribe(events.OPERAND_CLICKED, operandClicked);
+    EventEmitter.subscribe(events.OPERATOR_CLICKED, operatorClicked);
+    EventEmitter.subscribe(events.CALCULATE, calculate);
+    EventEmitter.subscribe(events.CLEAR, clear);
+    EventEmitter.subscribe(events.CORRECTION, correction);
+    return () => {
+      EventEmitter.unsubscribe(events.OPERAND_CLICKED);
+      EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
+      EventEmitter.unsubscribe(events.CALCULATE);
+      EventEmitter.unsubscribe(events.CLEAR);
+      EventEmitter.unsubscribe(events.CORRECTION);
+    }
+  }, [operandClicked, operatorClicked, correction, calculate, clear])
+
+  //////////////////////////////
+  //      Other functions     //
+  //////////////////////////////
+
+  /**
+   * Determine if a value is a valid operand
+   * @param {string} Value to be tested
+   * @return {boolean} True or false whether it was valid or not
+   */
+  function isValidOperand(value) {
+    return value.match(/^\d*(\.)?(\d*)?$/);
   }
 
   return (
@@ -175,6 +220,7 @@ const Calculator = () => {
         <div className="display" id="display">{state.error || state.current}</div>
       </div>
       <Key id="clear" eventType={events.CLEAR} label="AC" />
+      <Key classes="operator-button" eventType={events.CORRECTION} id="correction"><BackspaceIcon /></Key>
       <Key classes="operator-button" eventType={events.OPERATOR_CLICKED} label="/" id="divide"/>
       <Key classes="operator-button" eventType={events.OPERATOR_CLICKED} label="X" value="*" id="multiply"/>
       <Key label="7" id="seven"/>
@@ -191,7 +237,7 @@ const Calculator = () => {
       <Key label="." id="decimal"/>
       <Key id="zero" label="0"/>
       <Key id="equals" eventType={events.CALCULATE} label="=" />
-    </main >
+    </main>
   );
 }
 
