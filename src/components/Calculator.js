@@ -88,7 +88,7 @@ const Calculator = () => {
       let newHistory = '';
       if (
         operators.indexOf(current) < 0 || 
-        (value === '-' && history.match(/\d[-+/*]$/)) 
+        (value === '-' && history.match(/^\d*[-+/*]$/)) 
       ) {
         // match for when they put a negative sign 
         // clicked an operator from a numbers
@@ -132,14 +132,13 @@ const Calculator = () => {
    * @return {boolean} True or false whether it was valid or not
    */
   function isValidOperand(value) {
-    const validOperand = /^\d*(\.)?(\d*)?$/;
-    return value.match(validOperand);
+    return value.match(/^\d*(\.)?(\d*)?$/);
   }
 
   /** Initial the calculation */
   const calculate = () => {
     setState(s => {
-      if (s.error) {
+      if (s.error || s.history.length === 0) {
         return s;
       }
 
@@ -147,6 +146,12 @@ const Calculator = () => {
       if (s.history.indexOf('=') > -1) { 
         return s;
       }
+
+      // check if operation only has left number and operator, fill right operator with left
+      if (s.history.match(/^\d*[+-/*]$/)) {
+        s.history += s.history.slice(0, s.history.length - 1);
+      }
+
       const result = evaluate(s.history);
       return {history: s.history + '=' + result, current: result, error: ''};
     });
