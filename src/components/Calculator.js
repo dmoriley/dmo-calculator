@@ -5,9 +5,13 @@ import events from '../events/events';
 import { Key } from './Key';
 
 const Calculator = () => {
-  const [state, setState] = useState({history: '', current: '0'})
+  const [state, setState] = useState({history: '', current: '0', error: ''})
   const operators = ['/','*','+','-'];
-  const errors = {LIMIT: 'DIGIT LIMIT REACHED'};
+  const errors = {
+    LIMIT: 'DIGIT LIMIT REACHED',
+    MATH: 'MATH ERROR',
+    SYNTAX: 'SYNTAX ERROR'
+  };
 
     //////////////////////////////
   // Event handling functions //
@@ -17,17 +21,18 @@ const Calculator = () => {
    * When a number or period is clicked
    * @param value The number clicked
    */
-  const operandClicked = useCallback((value) => { //memoize function with usecallback to prevent new function creation on each render
+  const operandClicked = useCallback((value) => { // memoize function with usecallback to prevent new function creation on each render
     setState(({history, current}) => {
       // check if expression contains =, so previously evaluated
-      if(history.indexOf('=') >= 0) {
-        return {history: value, current: value};
+      if (history.indexOf('=') >= 0) {
+        return { history: value, current: value, error: ''};
       }
 
       // error if length longer than 18 characters
       if(current.length === 18) {
         setTimeout(() => {
-          setState({history, current});
+          // after 1.5s clear error
+          setState({history, current, error: ''});
         }, 1500);
         return {history, current, error: errors.LIMIT}
       }
@@ -53,29 +58,38 @@ const Calculator = () => {
 
       const newOperand = current + value;
       if(isValidOperand(newOperand)) {
-        return {history: history + value, current: newOperand};
+        return {history: history + value, current: newOperand, error: ''};
       } else {
         // invalid operand, return the previous
-        return {history, current};
+        return {history, current, error: ''};
       }
     });
-  }, [errors.LIMIT, operators]);
+  }, [errors, operators]);
 
   /**
    * When a operator like + - X / is clicked
    * @param value The operator clicked
    */
-  const operatorClicked = useCallback((value) => {
+  const operatorClicked = useCallback((value) => { // memoize function with usecallback to prevent new function creation on each render
     setState(({history, current, error}) => {
-      if(error) return {history,current,error};
+      if(error) {
+        return { history, current, error };
+      }
       // pressed operator after evaluating, continue with result
       if(history.indexOf('=') > -1) {
-        return {history: current + value, current: value};
+        return { history: current + value, current: value, error: ''};
+      }
+
+      // check if history is blank and pad a zero
+      if (history.length === 0) {
+        history += '0';
       }
 
       let newHistory = '';
-      if(operators.indexOf(current) < 0 || 
-        (value === '-' && history.match(/\d[-+/*]$/)) ) {
+      if (
+        operators.indexOf(current) < 0 || 
+        (value === '-' && history.match(/^\d*[-+/*]$/)) 
+      ) {
         // match for when they put a negative sign 
         // clicked an operator from a numbers
         newHistory =  history + value;
@@ -90,7 +104,7 @@ const Calculator = () => {
           newHistory = history.slice(0, history.length-1) + value;
         }
       }
-      return {history: newHistory, current: value};
+      return {history: newHistory, current: value, error: ''};
     });
   }, [operators]);
 
@@ -115,32 +129,41 @@ const Calculator = () => {
   /**
    * Determine if a value is a valid operand
    * @param {string} Value to be tested
-   * @return {boolean}True or value whether it was valid or not
+   * @return {boolean} True or false whether it was valid or not
    */
   function isValidOperand(value) {
-    const validOperand = /^\d*(\.)?(\d*)?$/;
-    return value.match(validOperand);
+    return value.match(/^\d*(\.)?(\d*)?$/);
   }
 
   /** Initial the calculation */
-  const calculate = (value) => {
+  const calculate = () => {
     setState(s => {
-      if(s.error) {
+      if (s.error || s.history.length === 0) {
         return s;
       }
-      if(s.history.indexOf('=') > -1) return s; // pressing = after evaluating doesn nothing
+
+      // pressing = after evaluating does nothing
+      if (s.history.indexOf('=') > -1) { 
+        return s;
+      }
+
+      // check if operation only has left number and operator, fill right operator with left
+      if (s.history.match(/^\d*[+-/*]$/)) {
+        s.history += s.history.slice(0, s.history.length - 1);
+      }
+
       const result = evaluate(s.history);
-      return {history: s.history + '=' + result, current: result};
+      return {history: s.history + '=' + result, current: result, error: ''};
     });
   }
 
   /** Clear the current calculation from the calculator */
-  const clear = (value) => {
+  const clear = () => {
     setState(prev => {
       if(prev.error) {
         return prev;
       } else {
-        return {history: '', current: '0'};
+        return {history: '', current: '0', error: ''};
       }
     });
   }
@@ -171,4 +194,5 @@ const Calculator = () => {
     </main >
   );
 }
+
 export default Calculator;
