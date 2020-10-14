@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import BackspaceIcon from '@material-ui/icons/Backspace';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
@@ -7,12 +7,11 @@ import { Key } from './Key';
 
 const Calculator = () => {
   const [state, setState] = useState({history: '', current: '0', error: ''})
-  const operators = ['/','*','+','-'];
-  const errors = {
+  const operators = useRef(['/','*','+','-']); // useRef used like instance property of class
+  const errors = useRef({
     LIMIT: 'DIGIT LIMIT REACHED',
-    MATH: 'MATH ERROR',
     SYNTAX: 'SYNTAX ERROR'
-  };
+  });
 
     //////////////////////////////
   // Event handling functions //
@@ -35,11 +34,11 @@ const Calculator = () => {
           // after 1.5s clear error
           setState({history, current, error: ''});
         }, 1500);
-        return {history, current, error: errors.LIMIT}
+        return {history, current, error: errors.current.LIMIT}
       }
 
       // check if the value is an operator and reset it to blank to make way for a number
-      if(operators.indexOf(current) >= 0) {
+      if(operators.current.indexOf(current) >= 0) {
         current = '';
       }
 
@@ -65,7 +64,7 @@ const Calculator = () => {
         return {history, current, error: ''};
       }
     });
-  }, [errors, operators]);
+  }, []);
 
   /**
    * When a operator like + - X / is clicked
@@ -88,7 +87,7 @@ const Calculator = () => {
 
       let newHistory = '';
       if (
-        operators.indexOf(current) < 0 || 
+        operators.current.indexOf(current) < 0 || 
         (value === '-' && history.match(/^\d*[-+/*]$/)) 
       ) {
         // match for when they put a negative sign 
@@ -107,15 +106,15 @@ const Calculator = () => {
       }
       return {history: newHistory, current: value, error: ''};
     });
-  }, [operators]);
+  }, []);
 
   /** Remove the last character entered */
   const correction = useCallback(() => {
-    if (state.history.length === 0) {
-      return;    
+    setState(s => {
+      if (s.history.length === 0) {
+        return s;
     }
 
-    setState(s => {
       let newCurrent = [], newHistory = '';
       if (s.history.indexOf('=') > -1) {
         // correction after evaluation
@@ -145,7 +144,7 @@ const Calculator = () => {
         history: newHistory,
       };
     });
-  }, [state.history]);
+  }, []);
 
   /** Initial the calculation */
   const calculate = useCallback(() => {
@@ -175,12 +174,12 @@ const Calculator = () => {
           // after 1.5s clear error
           setState({history: s.history, current: s.current, error: ''});
         }, 1500);
-        return {history: s.history, current: s.current, error: errors.SYNTAX}
+        return {history: s.history, current: s.current, error: errors.current.SYNTAX}
       }
 
       return {history: newHistory, current: result, error: ''};
     });
-  }, [errors.SYNTAX]);
+  }, []);
 
   /** Clear the current calculation from the calculator */
   const clear = useCallback(() => {
