@@ -111,24 +111,33 @@ const Calculator = () => {
 
   /** Remove the last character entered */
   const correction = useCallback(() => {
-    if (state.history.length === 0 || state.history.indexOf('=') > -1) {
+    if (state.history.length === 0) {
       return;    
     }
 
     setState(s => {
-      const newHistory = s.history.slice(0, s.history.length - 1);
-      let newCurrent = [];
-  
-      if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
-        // if char removed was a number and new last charater is operator
-        newCurrent[0] = newHistory.charAt(newHistory.length - 1);
-      } else if (newHistory.length === 0) {
-        newCurrent = '0';
-      } else {
+      let newCurrent = [], newHistory = '';
+      if (s.history.indexOf('=') > -1) {
+        // correction after evaluation
+        newHistory = s.history.split('=')[0]; // take value before =
         // get all numbers in history and assign last one to newCurrent
         const numbers = newHistory.match(/\d*/g).filter(i => i);
         newCurrent = numbers[numbers.length - 1];
+      } else {
+        newHistory = s.history.slice(0, s.history.length - 1);
+    
+        if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
+          // if char removed was a number and new last charater is operator
+          newCurrent = newHistory.charAt(newHistory.length - 1);
+        } else if (newHistory.length === 0) {
+          newCurrent = '0';
+        } else {
+          // get all numbers in history and assign last one to newCurrent
+          const numbers = newHistory.match(/\d*/g).filter(i => i);
+          newCurrent = numbers[numbers.length - 1];
+        }
       }
+      
 
       return { 
         ...s,
