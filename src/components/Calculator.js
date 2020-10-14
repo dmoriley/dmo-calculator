@@ -4,6 +4,7 @@ import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
 import { Key } from './Key';
+import { setupKeyboardSupport, removeKeyboardSupport } from '../events/keyboard-events';
 
 const Calculator = () => {
   const [state, setState] = useState({history: '', current: '0', error: ''})
@@ -113,7 +114,7 @@ const Calculator = () => {
     setState(s => {
       if (s.history.length === 0) {
         return s;
-    }
+      }
 
       let newCurrent = [], newHistory = '';
       if (s.history.indexOf('=') > -1) {
@@ -199,12 +200,14 @@ const Calculator = () => {
     EventEmitter.subscribe(events.CALCULATE, calculate);
     EventEmitter.subscribe(events.CLEAR, clear);
     EventEmitter.subscribe(events.CORRECTION, correction);
+    setupKeyboardSupport();
     return () => {
       EventEmitter.unsubscribe(events.OPERAND_CLICKED);
       EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
       EventEmitter.unsubscribe(events.CALCULATE);
       EventEmitter.unsubscribe(events.CLEAR);
       EventEmitter.unsubscribe(events.CORRECTION);
+      removeKeyboardSupport()
     }
   }, [operandClicked, operatorClicked, correction, calculate, clear])
 
