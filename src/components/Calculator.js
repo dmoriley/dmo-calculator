@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import BackspaceIcon from '@material-ui/icons/Backspace';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
 import { Key } from './Key';
+import { setupKeyboardSupport, removeKeyboardSupport } from '../events/keyboard-events';
 
 const Calculator = () => {
   const [state, setState] = useState({history: '', current: '0', error: ''})
-  const operators = ['/','*','+','-'];
-  const errors = {
+  const operators = useRef(['/','*','+','-']); // useRef used like instance property of class
+  const errors = useRef({
     LIMIT: 'DIGIT LIMIT REACHED',
-    MATH: 'MATH ERROR',
     SYNTAX: 'SYNTAX ERROR'
-  };
+  });
 
     //////////////////////////////
   // Event handling functions //
@@ -35,11 +35,11 @@ const Calculator = () => {
           // after 1.5s clear error
           setState({history, current, error: ''});
         }, 1500);
-        return {history, current, error: errors.LIMIT}
+        return {history, current, error: errors.current.LIMIT}
       }
 
       // check if the value is an operator and reset it to blank to make way for a number
-      if(operators.indexOf(current) >= 0) {
+      if(operators.current.indexOf(current) >= 0) {
         current = '';
       }
 
@@ -65,7 +65,7 @@ const Calculator = () => {
         return {history, current, error: ''};
       }
     });
-  }, [errors, operators]);
+  }, []);
 
   /**
    * When a operator like + - X / is clicked
@@ -88,7 +88,7 @@ const Calculator = () => {
 
       let newHistory = '';
       if (
-        operators.indexOf(current) < 0 || 
+        operators.current.indexOf(current) < 0 || 
         (value === '-' && history.match(/^\d*[-+/*]$/)) 
       ) {
         // match for when they put a negative sign 
@@ -107,28 +107,37 @@ const Calculator = () => {
       }
       return {history: newHistory, current: value, error: ''};
     });
-  }, [operators]);
+  }, []);
 
   /** Remove the last character entered */
   const correction = useCallback(() => {
-    if (state.history.length === 0 || state.history.indexOf('=') > -1) {
-      return;    
-    }
-
     setState(s => {
-      const newHistory = s.history.slice(0, s.history.length - 1);
-      let newCurrent = [];
-  
-      if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
-        // if char removed was a number and new last charater is operator
-        newCurrent[0] = newHistory.charAt(newHistory.length - 1);
-      } else if (newHistory.length === 0) {
-        newCurrent = '0';
-      } else {
+      if (s.history.length === 0) {
+        return s;
+      }
+
+      let newCurrent = [], newHistory = '';
+      if (s.history.indexOf('=') > -1) {
+        // correction after evaluation
+        newHistory = s.history.split('=')[0]; // take value before =
         // get all numbers in history and assign last one to newCurrent
         const numbers = newHistory.match(/\d*/g).filter(i => i);
         newCurrent = numbers[numbers.length - 1];
+      } else {
+        newHistory = s.history.slice(0, s.history.length - 1);
+    
+        if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
+          // if char removed was a number and new last charater is operator
+          newCurrent = newHistory.charAt(newHistory.length - 1);
+        } else if (newHistory.length === 0) {
+          newCurrent = '0';
+        } else {
+          // get all numbers in history and assign last one to newCurrent
+          const numbers = newHistory.match(/\d*/g).filter(i => i);
+          newCurrent = numbers[numbers.length - 1];
+        }
       }
+      
 
       return { 
         ...s,
@@ -136,7 +145,7 @@ const Calculator = () => {
         history: newHistory,
       };
     });
-  }, [state.history]);
+  }, []);
 
   /** Initial the calculation */
   const calculate = useCallback(() => {
@@ -166,12 +175,12 @@ const Calculator = () => {
           // after 1.5s clear error
           setState({history: s.history, current: s.current, error: ''});
         }, 1500);
-        return {history: s.history, current: s.current, error: errors.SYNTAX}
+        return {history: s.history, current: s.current, error: errors.current.SYNTAX}
       }
 
       return {history: newHistory, current: result, error: ''};
     });
-  }, [errors.SYNTAX]);
+  }, []);
 
   /** Clear the current calculation from the calculator */
   const clear = useCallback(() => {
@@ -191,12 +200,14 @@ const Calculator = () => {
     EventEmitter.subscribe(events.CALCULATE, calculate);
     EventEmitter.subscribe(events.CLEAR, clear);
     EventEmitter.subscribe(events.CORRECTION, correction);
+    setupKeyboardSupport();
     return () => {
       EventEmitter.unsubscribe(events.OPERAND_CLICKED);
       EventEmitter.unsubscribe(events.OPERATOR_CLICKED);
       EventEmitter.unsubscribe(events.CALCULATE);
       EventEmitter.unsubscribe(events.CLEAR);
       EventEmitter.unsubscribe(events.CORRECTION);
+      removeKeyboardSupport()
     }
   }, [operandClicked, operatorClicked, correction, calculate, clear])
 
