@@ -1,68 +1,72 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import BackspaceIcon from '@material-ui/icons/Backspace';
+import BackspaceIcon from './BackspaceIcon';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
 import { Key } from './Key';
-import { setupKeyboardSupport, removeKeyboardSupport } from '../events/keyboard-events';
+import {
+  setupKeyboardSupport,
+  removeKeyboardSupport,
+} from '../events/keyboard-events';
 
 const Calculator = () => {
-  const [state, setState] = useState({history: '', current: '0', error: ''})
-  const operators = useRef(['/','*','+','-']); // useRef used like instance property of class
+  const [state, setState] = useState({ history: '', current: '0', error: '' });
+  const operators = useRef(['/', '*', '+', '-']); // useRef used like instance property of class
   const errors = useRef({
     LIMIT: 'DIGIT LIMIT REACHED',
-    SYNTAX: 'SYNTAX ERROR'
+    SYNTAX: 'SYNTAX ERROR',
   });
 
-    //////////////////////////////
+  //////////////////////////////
   // Event handling functions //
   //////////////////////////////
-  
+
   /**
    * When a number or period is clicked
    * @param value The number clicked
    */
-  const operandClicked = useCallback((value) => { // memoize function with usecallback to prevent new function creation on each render
-    setState(({history, current}) => {
+  const operandClicked = useCallback((value) => {
+    // memoize function with usecallback to prevent new function creation on each render
+    setState(({ history, current }) => {
       // check if expression contains =, so previously evaluated
       if (history.indexOf('=') >= 0) {
-        return { history: value, current: value, error: ''};
+        return { history: value, current: value, error: '' };
       }
 
       // error if length longer than 18 characters
-      if(current.length === 18) {
+      if (current.length === 18) {
         setTimeout(() => {
           // after 1.5s clear error
-          setState({history, current, error: ''});
+          setState({ history, current, error: '' });
         }, 1500);
-        return {history, current, error: errors.current.LIMIT}
+        return { history, current, error: errors.current.LIMIT };
       }
 
       // check if the value is an operator and reset it to blank to make way for a number
-      if(operators.current.indexOf(current) >= 0) {
+      if (operators.current.indexOf(current) >= 0) {
         current = '';
       }
 
-      if(current === '0' && value === '0') {
+      if (current === '0' && value === '0') {
         // prevent multiple zeros in a row on init
         value = '';
-      } else if((current === '' || current === '0') && value === '.') {
+      } else if ((current === '' || current === '0') && value === '.') {
         // selecting a decimal right after an operator, front pad decimal with a zero
-        // or 
+        // or
         // selecting . on init
         value = '0.';
         current = '';
-      } else if(current === '0' && value !== '.') {
+      } else if (current === '0' && value !== '.') {
         // selecting a number after init, get rid of zero at front
-        current = ''
-      } 
+        current = '';
+      }
 
       const newOperand = current + value;
-      if(isValidOperand(newOperand)) {
-        return {history: history + value, current: newOperand, error: ''};
+      if (isValidOperand(newOperand)) {
+        return { history: history + value, current: newOperand, error: '' };
       } else {
         // invalid operand, return the previous
-        return {history, current, error: ''};
+        return { history, current, error: '' };
       }
     });
   }, []);
@@ -71,14 +75,15 @@ const Calculator = () => {
    * When a operator like + - X / is clicked
    * @param value The operator clicked
    */
-  const operatorClicked = useCallback((value) => { // memoize function with usecallback to prevent new function creation on each render
-    setState(({history, current, error}) => {
-      if(error) {
+  const operatorClicked = useCallback((value) => {
+    // memoize function with usecallback to prevent new function creation on each render
+    setState(({ history, current, error }) => {
+      if (error) {
         return { history, current, error };
       }
       // pressed operator after evaluating, continue with result
-      if(history.indexOf('=') > -1) {
-        return { history: current + value, current: value, error: ''};
+      if (history.indexOf('=') > -1) {
+        return { history: current + value, current: value, error: '' };
       }
 
       // check if history is blank and pad a zero
@@ -88,44 +93,45 @@ const Calculator = () => {
 
       let newHistory = '';
       if (
-        operators.current.indexOf(current) < 0 || 
-        (value === '-' && history.match(/^\d*[-+/*]$/)) 
+        operators.current.indexOf(current) < 0 ||
+        (value === '-' && history.match(/^\d*[-+/*]$/))
       ) {
-        // match for when they put a negative sign 
+        // match for when they put a negative sign
         // clicked an operator from a numbers
-        newHistory =  history + value;
+        newHistory = history + value;
       } else {
         // clicked an operator from an operator
         // replace last character in the history with the new operator
-        if(history.match(/\d[-+/*]-$/)) {
+        if (history.match(/\d[-+/*]-$/)) {
           // has negative sign so replace operator and negative sign with new operator
-          newHistory = history.slice(0, history.length-2) + value;  
+          newHistory = history.slice(0, history.length - 2) + value;
         } else {
           // no negative sign
-          newHistory = history.slice(0, history.length-1) + value;
+          newHistory = history.slice(0, history.length - 1) + value;
         }
       }
-      return {history: newHistory, current: value, error: ''};
+      return { history: newHistory, current: value, error: '' };
     });
   }, []);
 
   /** Remove the last character entered */
   const correction = useCallback(() => {
-    setState(s => {
+    setState((s) => {
       if (s.history.length === 0) {
         return s;
       }
 
-      let newCurrent = [], newHistory = '';
+      let newCurrent = [],
+        newHistory = '';
       if (s.history.indexOf('=') > -1) {
         // correction after evaluation
         newHistory = s.history.split('=')[0]; // take value before =
         // get all numbers in history and assign last one to newCurrent
-        const numbers = newHistory.match(/\d*/g).filter(i => i);
+        const numbers = newHistory.match(/\d*/g).filter((i) => i);
         newCurrent = numbers[numbers.length - 1];
       } else {
         newHistory = s.history.slice(0, s.history.length - 1);
-    
+
         if (!Number.isInteger(+newHistory.charAt(newHistory.length - 1))) {
           // if char removed was a number and new last charater is operator
           newCurrent = newHistory.charAt(newHistory.length - 1);
@@ -133,13 +139,12 @@ const Calculator = () => {
           newCurrent = '0';
         } else {
           // get all numbers in history and assign last one to newCurrent
-          const numbers = newHistory.match(/\d*/g).filter(i => i);
+          const numbers = newHistory.match(/\d*/g).filter((i) => i);
           newCurrent = numbers[numbers.length - 1];
         }
       }
-      
 
-      return { 
+      return {
         ...s,
         current: newCurrent,
         history: newHistory,
@@ -149,13 +154,13 @@ const Calculator = () => {
 
   /** Initial the calculation */
   const calculate = useCallback(() => {
-    setState(s => {
+    setState((s) => {
       if (s.error || s.history.length === 0) {
         return s;
       }
 
       // pressing = after evaluating does nothing
-      if (s.history.indexOf('=') > -1) { 
+      if (s.history.indexOf('=') > -1) {
         return s;
       }
 
@@ -168,32 +173,35 @@ const Calculator = () => {
       let result = '';
       try {
         result = evaluate(s.history);
-        newHistory = s.history + '=' + result;        
+        newHistory = s.history + '=' + result;
       } catch (error) {
-
         setTimeout(() => {
           // after 1.5s clear error
-          setState({history: s.history, current: s.current, error: ''});
+          setState({ history: s.history, current: s.current, error: '' });
         }, 1500);
-        return {history: s.history, current: s.current, error: errors.current.SYNTAX}
+        return {
+          history: s.history,
+          current: s.current,
+          error: errors.current.SYNTAX,
+        };
       }
 
-      return {history: newHistory, current: result, error: ''};
+      return { history: newHistory, current: result, error: '' };
     });
   }, []);
 
   /** Clear the current calculation from the calculator */
   const clear = useCallback(() => {
-    setState(prev => {
-      if(prev.error) {
+    setState((prev) => {
+      if (prev.error) {
         return prev;
       } else {
-        return {history: '', current: '0', error: ''};
+        return { history: '', current: '0', error: '' };
       }
     });
   }, []);
 
-  // subscribe and unsubscribe from the events 
+  // subscribe and unsubscribe from the events
   useEffect(() => {
     EventEmitter.subscribe(events.OPERAND_CLICKED, operandClicked);
     EventEmitter.subscribe(events.OPERATOR_CLICKED, operatorClicked);
@@ -207,9 +215,9 @@ const Calculator = () => {
       EventEmitter.unsubscribe(events.CALCULATE);
       EventEmitter.unsubscribe(events.CLEAR);
       EventEmitter.unsubscribe(events.CORRECTION);
-      removeKeyboardSupport()
-    }
-  }, [operandClicked, operatorClicked, correction, calculate, clear])
+      removeKeyboardSupport();
+    };
+  }, [operandClicked, operatorClicked, correction, calculate, clear]);
 
   //////////////////////////////
   //      Other functions     //
@@ -228,28 +236,57 @@ const Calculator = () => {
     <main className="calculator-container">
       <div className="display-container">
         <div className="history">{state.history}</div>
-        <div className="display" id="display">{state.error || state.current}</div>
+        <div className="display" id="display">
+          {state.error || state.current}
+        </div>
       </div>
       <Key id="clear" eventType={events.CLEAR} label="AC" />
-      <Key classes="operator-button" eventType={events.CORRECTION} id="correction"><BackspaceIcon /></Key>
-      <Key classes="operator-button" eventType={events.OPERATOR_CLICKED} label="/" id="divide"/>
-      <Key classes="operator-button" eventType={events.OPERATOR_CLICKED} label="X" value="*" id="multiply"/>
-      <Key label="7" id="seven"/>
-      <Key label="8" id="eight"/>
-      <Key label="9" id="nine"/>
-      <Key classes="operator-button" id="subtract" eventType={events.OPERATOR_CLICKED} label="-" />
-      <Key label="4" id="four"/>
-      <Key label="5" id="five"/>
-      <Key label="6" id="six"/>
-      <Key classes="operator-button" id="add" eventType={events.OPERATOR_CLICKED} label="+" />
-      <Key label="1" id="one"/>
-      <Key label="2" id="two"/>
-      <Key label="3" id="three"/>
-      <Key label="." id="decimal"/>
-      <Key id="zero" label="0"/>
+      <Key
+        classes="operator-button"
+        eventType={events.CORRECTION}
+        id="correction"
+      >
+        <BackspaceIcon />
+      </Key>
+      <Key
+        classes="operator-button"
+        eventType={events.OPERATOR_CLICKED}
+        label="/"
+        id="divide"
+      />
+      <Key
+        classes="operator-button"
+        eventType={events.OPERATOR_CLICKED}
+        label="X"
+        value="*"
+        id="multiply"
+      />
+      <Key label="7" id="seven" />
+      <Key label="8" id="eight" />
+      <Key label="9" id="nine" />
+      <Key
+        classes="operator-button"
+        id="subtract"
+        eventType={events.OPERATOR_CLICKED}
+        label="-"
+      />
+      <Key label="4" id="four" />
+      <Key label="5" id="five" />
+      <Key label="6" id="six" />
+      <Key
+        classes="operator-button"
+        id="add"
+        eventType={events.OPERATOR_CLICKED}
+        label="+"
+      />
+      <Key label="1" id="one" />
+      <Key label="2" id="two" />
+      <Key label="3" id="three" />
+      <Key label="." id="decimal" />
+      <Key id="zero" label="0" />
       <Key id="equals" eventType={events.CALCULATE} label="=" />
     </main>
   );
-}
+};
 
 export default Calculator;

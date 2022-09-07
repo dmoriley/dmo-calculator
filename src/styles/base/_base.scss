@@ -3,26 +3,30 @@
 }
 
 html {
-    font-size: 62.5%;
+  font-size: 62.5%;
 }
 
 body {
-    color: black;
-    font-family: Helvetica, Arial,sans-serif;
-    font-size: $m-size !important;
-    line-height: 1.6;
+  color: black;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: $m-size !important;
+  line-height: 1.6;
+  margin: 0;
 }
 
-h1, p {
+h1,
+p {
   font-family: Lato;
 }
 
-*, *:before, *:after {
-    box-sizing: border-box; //when setting the height/width of an item it takes into account the padding/border size aswell to get that size specified 
-  }
+*,
+*:before,
+*:after {
+  box-sizing: border-box; //when setting the height/width of an item it takes into account the padding/border size aswell to get that size specified
+}
 
 button {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 a {
@@ -31,9 +35,9 @@ a {
 }
 
 button:disabled {
-    cursor: default;
+  cursor: default;
 }
 
 .is-active {
-    font-weight:bold;
+  font-weight: bold;
 }
