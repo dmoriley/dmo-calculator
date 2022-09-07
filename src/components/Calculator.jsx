@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import BackspaceIcon from './BackspaceIcon';
 import { evaluate } from 'mathjs';
 import { EventEmitter } from '../events/event-emitter';
 import events from '../events/events';
-import { Key } from './Key';
+import BackspaceIcon from './BackspaceIcon';
+import Key from './Key';
 import {
   setupKeyboardSupport,
   removeKeyboardSupport,

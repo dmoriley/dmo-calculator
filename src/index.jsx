@@ -9,13 +9,13 @@ const App = () => (
       <Calculator />
       <footer>
         <p>
-          Designed and Coded by <br />{' '}
+          Designed and Coded by <br />
           <a
             href="https://github.com/dmoriley"
             target="_blank"
             rel="noopener noreferrer"
           >
-            David O'Riley{' '}
+            David O'Riley
           </a>
         </p>
       </footer>

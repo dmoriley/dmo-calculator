@@ -1,4 +1,4 @@
-.gg-backspace {
+.ggBackspace {
   box-sizing: border-box;
   position: relative;
   display: block;
@@ -10,14 +10,14 @@
   border-top-right-radius: 2px;
   border-bottom-right-radius: 2px;
 }
-.gg-backspace::after,
-.gg-backspace::before {
+.ggBackspace::after,
+.ggBackspace::before {
   content: '';
   display: block;
   box-sizing: border-box;
   position: absolute;
 }
-.gg-backspace::before {
+.ggBackspace::before {
   background: linear-gradient(to left, currentColor 18px, transparent 0)
     no-repeat center center/10px 2px;
   border-right: 3px solid transparent;
@@ -29,7 +29,7 @@
   border-left: 3px solid transparent;
   transform: rotate(45deg);
 }
-.gg-backspace::after {
+.ggBackspace::after {
   width: 10px;
   height: 10px;
   border-top: 2px solid;

@@ -1,10 +1,12 @@
+// File contents not being used, kept for reference
+
 /**
  * Set a new state for the global state.
  * @param newState The new state to set
  */
 function setState(newState) {
   this.state = { ...this.state, ...newState };
-  this.listeners.forEach((listener) => { 
+  this.listeners.forEach((listener) => {
     // pretty sure we have to set the state so that React initiats a re-render if needed
     listener(this.state);
   });
@@ -20,7 +22,9 @@ function useCustom(React) {
   React.useEffect(() => {
     this.listeners.push(newListener); // push the setState listener on the listeners array
     return () => {
-      this.listeners = this.listeners.filter(listener => listener !== newListener);
+      this.listeners = this.listeners.filter(
+        (listener) => listener !== newListener
+      );
     };
   }, []);
   return [this.state, this.actions]; // returning actions because they are the only way to modifiy, no direct access to setState
@@ -64,6 +68,5 @@ const useGlobalHook = (React, initialState, actions) => {
 };
 
 export default useGlobalHook;
-
 
 // https://medium.com/javascript-in-plain-english/state-management-with-react-hooks-no-redux-or-context-api-8b3035ceecf8
