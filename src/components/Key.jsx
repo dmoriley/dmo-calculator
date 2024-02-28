@@ -15,7 +15,7 @@ const Key = ({ label, value, id, eventType, classes, children }) => {
       onClick={() =>
         EventEmitter.emit(eventType || events.OPERAND_CLICKED, value || label)
       }
-      className={combineClasses("calculator-button", classes)}
+      className={combineClasses("calculator-button", [classes])}
     >
       {label || children}
     </div>
