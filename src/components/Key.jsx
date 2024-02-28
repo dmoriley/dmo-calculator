@@ -1,8 +1,12 @@
-import classNames from 'classnames';
-import PropTypes from 'prop-types';
-import React from 'react';
-import { EventEmitter } from '../events/event-emitter';
-import events from '../events/events';
+import PropTypes from "prop-types";
+import React from "react";
+import { EventEmitter } from "../events/event-emitter";
+import events from "../events/events";
+
+function combineClasses(cssClass, cssClassArr) {
+  cssClassArr.push(cssClass);
+  return cssClassArr.join(" ");
+}
 
 const Key = ({ label, value, id, eventType, classes, children }) => {
   return (
@@ -11,7 +15,7 @@ const Key = ({ label, value, id, eventType, classes, children }) => {
       onClick={() =>
         EventEmitter.emit(eventType || events.OPERAND_CLICKED, value || label)
       }
-      className={classNames('calculator-button', classes)}
+      className={combineClasses("calculator-button", classes)}
     >
       {label || children}
     </div>
